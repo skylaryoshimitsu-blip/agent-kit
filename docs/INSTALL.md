@@ -43,9 +43,12 @@ Set in Claude Code's environment settings, never in a repo:
 `agent-reports` repo under `reports/<project_id>/`. The weekly rollup reads from it.
 
 - The repo is cloned next to the project (`../agent-reports`) on first use.
-- In cloud sessions, attach `agent-reports` to the session (with push access).
-  If it isn't reachable, the report still posts to #reports but is not archived,
-  and an "archive failed" message goes to #logs.
+- **Start cloud sessions with only the project repo attached.** A session with two or
+  more repos starts in a parent folder, and the kit's hooks don't load there (no
+  measured time, no automatic #logs messages).
+- When `/report` needs `agent-reports` (or a lesson PR needs `agent-kit`), the agent
+  attaches it mid-session, then runs `report.sh archive` (or reruns `lessons.sh propose`).
+  The report itself has already posted to #reports, so it is never posted twice.
 
 Optional overrides (defaults work for most setups):
 

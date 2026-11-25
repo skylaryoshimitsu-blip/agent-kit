@@ -2,7 +2,15 @@
 # Shared helpers for the hook scripts.
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+# Project folder: from Claude Code, else the git repo we're in, else the repo this kit
+# belongs to (kit repo itself, or the project that has .agent-kit/ installed).
+find_project_dir() {
+  local top kit_parent
+  top="$(git rev-parse --show-toplevel 2>/dev/null)" && { echo "$top"; return; }
+  kit_parent="$(cd "$HOOK_DIR/.." && pwd)"
+  if [ "$(basename "$kit_parent")" = ".agent-kit" ]; then dirname "$kit_parent"; else echo "$kit_parent"; fi
+}
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(find_project_dir)}"
 AGENT_DIR="$PROJECT_DIR/.agent"
 SESSION_LOG="$AGENT_DIR/session-log.jsonl"
 mkdir -p "$AGENT_DIR" 2>/dev/null

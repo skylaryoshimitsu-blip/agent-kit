@@ -17,7 +17,7 @@ set -u
 KIT_SELF="$(cd "$HOOK_DIR/.." && pwd)"
 kit_repo() {
   # The writable agent-kit clone, if any.
-  for d in "${AGENT_KIT_DIR:-}" "$PROJECT_DIR" "$(dirname "$PROJECT_DIR")/agent-kit" "$KIT_SELF"; do
+  for d in "${AGENT_KIT_DIR:-}" "$PROJECT_DIR" "$(dirname "$PROJECT_DIR")/agent-kit" "$PWD/agent-kit" "$HOME/agent-kit" "$KIT_SELF"; do
     [ -n "$d" ] && [ -f "$d/install.sh" ] && [ -d "$d/.git" ] && { echo "$d"; return 0; }
   done
   return 1
@@ -60,7 +60,7 @@ PY
 
   propose)
     f="${1:-}"; [ -f "$f" ] || { echo "usage: lessons.sh propose <proposals.json>" >&2; exit 2; }
-    k="$(kit_repo)" || { echo "LESSONS FAILED: agent-kit repo not reachable. Attach skylaryoshimitsu-blip/agent-kit to this session, then rerun." >&2; exit 1; }
+    k="$(kit_repo)" || { echo "LESSONS FAILED: agent-kit repo not reachable. Attach skylaryoshimitsu-blip/agent-kit to this session (mid-session is fine), then rerun." >&2; exit 1; }
 
     # Client safety: block lessons that mention the client's name, repo, or domain.
     prof="$PROJECT_DIR/agent-profile.yaml"
