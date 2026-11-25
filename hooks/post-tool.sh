@@ -33,6 +33,8 @@ fi
 # Push: read git's "x -> y" line; if output was suppressed, fall back to
 # checking whether the branch's upstream moved.
 if printf '%s' "$cmd" | grep -qE 'git( -C [^ ]+)?( -c [^ ]+)* push'; then
+  # Drop harmless push-negotiation noise ("expected 'acknowledgments'…") before judging.
+  out="$(printf '%s' "$out" | grep -vE "acknowledgments|push negotiation")"
   prev_up="$(state_get "$sid" upstream)"
   cur_up="$(upstream_sha)"
   pline="$(printf '%s' "$out" | grep -E -- '->' | grep -vE 'rejected|error' | tail -1)"
@@ -44,7 +46,7 @@ if printf '%s' "$cmd" | grep -qE 'git( -C [^ ]+)?( -c [^ ]+)* push'; then
   elif [ -n "$cur_up" ] && [ "$cur_up" != "$prev_up" ]; then
     log_event "push" "$sid" "$(jq -cn --arg sha "$cur_up" --arg b "$br" '{sha:$sha, branch:$b}')"
     post logs "⬆️ Pushed \`$cur_up\` to \`$br\` (\`$repo\`)"
-  elif printf '%s' "$out" | grep -qE 'rejected|error:|fatal:'; then
+  elif printf '%s' "$out" | grep -qE 'rejected|error: failed to push|denied|Authentication failed|could not read|returned error: 4[0-9][0-9]'; then
     post logs "❌ Push failed (\`$repo\`):
 \`\`\`
 $(printf '%s' "$out" | grep -E 'rejected|error|fatal|hint' | head -8)

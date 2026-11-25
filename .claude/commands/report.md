@@ -24,6 +24,6 @@ Otherwise, write the session report:
    - Plain language for the profile's audience. No secrets, no internal notes, nothing from other projects; no file paths unless the audience is technical.
    - Do not write any times — the script measures them.
 3. **Build, post, archive:** `bash <hooks>/report.sh session .agent/report-input.json`. This posts the message and PDF to #reports and saves both to the agent-reports repo.
-4. If the archive step reports a failure, say so plainly; the Discord report still counts as delivered.
+4. If the archive step fails because agent-reports isn't reachable: attach the `skylaryoshimitsu-blip/agent-reports` repo to this session (push access), then run `bash <hooks>/report.sh archive`. Never rerun `report.sh session` — that would post the report to #reports twice. If it still fails, say so plainly; the Discord report still counts as delivered.
 5. Post "Session ended" with the end time to #logs.
 6. Then propose lessons (Section 12), one message each to #lessons.

@@ -2,6 +2,7 @@
 # Build, post, and archive a report.
 #
 #   report.sh session <report.json>   session report: PDF + #reports post + archive
+#   report.sh archive                 save the last report to agent-reports only (no Discord post)
 #   report.sh weekly [YYYY-MM-DD]     weekly rollup:  PDF + #reports post
 #
 # Archive: reports are saved to the private agent-reports repo
@@ -21,6 +22,40 @@ ensure_archive() {
   fi
 }
 
+archive_last() {
+  # Save the last built report (.agent/out.json) to agent-reports. Never posts to #reports.
+  local out="$PROJECT_DIR/.agent/out.json"
+  [ -f "$out" ] || { echo "no built report found (.agent/out.json)" >&2; return 1; }
+  local pdf js pid stem dest br sb
+  pdf="$(jq -r .pdf "$out")"; js="$(jq -r .json "$out")"
+  pid="$(jq -r .project_id "$out")"; stem="$(jq -r .stem "$out")"
+  if ensure_archive; then
+    dest="$AGENT_REPORTS_DIR/reports/$pid"; mkdir -p "$dest"
+    cp "$js" "$dest/$stem.json"; cp "$pdf" "$dest/$stem.pdf"
+    git -C "$AGENT_REPORTS_DIR" add "reports/$pid" >/dev/null
+    git -C "$AGENT_REPORTS_DIR" -c user.name="agent-kit" -c user.email="agent-kit@users.noreply.github.com" \
+      commit -qm "Report: $pid $stem" >/dev/null 2>&1
+    br="$(git -C "$AGENT_REPORTS_DIR" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')"
+    [ -z "$br" ] && br=main
+    if git -C "$AGENT_REPORTS_DIR" push -q origin "HEAD:$br" 2>/dev/null; then
+      echo "archived to agent-reports: reports/$pid/$stem.{json,pdf}"
+    else
+      sb="$(branch_name)"
+      if git -C "$AGENT_REPORTS_DIR" push -q origin "HEAD:refs/heads/$sb" 2>/dev/null; then
+        echo "archived to agent-reports on branch $sb (main was not writable from this session)"
+      else
+        echo "ARCHIVE FAILED: report was posted to Discord but not saved to agent-reports" >&2
+        "$HOOK_DIR/discord-post.sh" logs "❌ Report archive failed for \`$pid\` ($stem). The report is in #reports but not in agent-reports."
+        return 1
+      fi
+    fi
+  else
+    echo "ARCHIVE FAILED: could not clone agent-reports. Attach agent-reports to this session, then run: report.sh archive" >&2
+    "$HOOK_DIR/discord-post.sh" logs "❌ Report archive failed: agent-reports repo not reachable from this session. Fix: attach it, then report.sh archive (do not rerun report.sh session)."
+    return 1
+  fi
+}
+
 case "$mode" in
   session)
     [ -z "${1:-}" ] && { echo "usage: report.sh session <report.json>" >&2; exit 2; }
@@ -30,30 +65,11 @@ case "$mode" in
     pid="$(jq -r .project_id "$out")"; stem="$(jq -r .stem "$out")"
     "$HOOK_DIR/discord-post.sh" reports --file "$pdf" "$msg"
 
-    # Archive (best effort; the report has already been delivered to Discord).
-    if ensure_archive; then
-      dest="$AGENT_REPORTS_DIR/reports/$pid"; mkdir -p "$dest"
-      cp "$js" "$dest/$stem.json"; cp "$pdf" "$dest/$stem.pdf"
-      git -C "$AGENT_REPORTS_DIR" add "reports/$pid" >/dev/null
-      git -C "$AGENT_REPORTS_DIR" -c user.name="agent-kit" -c user.email="agent-kit@users.noreply.github.com" \
-        commit -qm "Report: $pid $stem" >/dev/null 2>&1
-      br="$(git -C "$AGENT_REPORTS_DIR" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')"
-      [ -z "$br" ] && br=main
-      if git -C "$AGENT_REPORTS_DIR" push -q origin "HEAD:$br" 2>/dev/null; then
-        echo "archived to agent-reports: reports/$pid/$stem.{json,pdf}"
-      else
-        sb="$(branch_name)"
-        if git -C "$AGENT_REPORTS_DIR" push -q origin "HEAD:refs/heads/$sb" 2>/dev/null; then
-          echo "archived to agent-reports on branch $sb (main was not writable from this session)"
-        else
-          echo "ARCHIVE FAILED: report was posted to Discord but not saved to agent-reports" >&2
-          "$HOOK_DIR/discord-post.sh" logs "❌ Report archive failed for \`$pid\` ($stem). The report is in #reports but not in agent-reports."
-        fi
-      fi
-    else
-      echo "ARCHIVE FAILED: could not clone agent-reports (is it attached to this session?)" >&2
-      "$HOOK_DIR/discord-post.sh" logs "❌ Report archive failed: agent-reports repo not reachable from this session."
-    fi
+    archive_last
+    ;;
+  archive)
+    # Archive-only: use after attaching agent-reports when the first attempt failed.
+    archive_last
     ;;
   weekly)
     ensure_archive || echo "warning: agent-reports not reachable; weekly totals may be incomplete" >&2
@@ -66,5 +82,5 @@ case "$mode" in
     out="$PROJECT_DIR/.agent/out.json"
     "$HOOK_DIR/discord-post.sh" reports --file "$(jq -r .pdf "$out")" "$(jq -r .message "$out")"
     ;;
-  *) echo "usage: report.sh session <report.json> | weekly [YYYY-MM-DD]" >&2; exit 2 ;;
+  *) echo "usage: report.sh session <report.json> | archive | weekly [YYYY-MM-DD]" >&2; exit 2 ;;
 esac

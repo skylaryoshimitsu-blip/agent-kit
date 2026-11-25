@@ -55,6 +55,8 @@ preview-branch migrations, preview env vars) proceeds without asking, but is log
 5. Vercel preview deploy → run the verification protocol (section 6) on the preview.
 6. Request the merge gate. After merge, run verification again on production.
 7. Don't offer to watch a PR for comments or CI unless the repo actually has CI checks.
+8. You never merge to the production branch yourself. When you see a PR was merged,
+   report it as "PR #X merged by Golden", then run post-merge verification.
 
 ## 6. Verification protocol — "done" means proven live
 
