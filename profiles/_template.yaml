@@ -1,0 +1,64 @@
+# Project profile template
+# Copy to profiles/<project-id>.yaml and fill in. Never put secret VALUES here —
+# only the NAMES of env vars where the values are stored.
+
+project_id: example-project          # short slug, used in commands: /feature example-project
+display_name: Example Project        # name used in reports
+
+owner:
+  type: client                       # zenyra | client
+  name: Acme Health                  # client or Zenyra product name, shown in reports
+  contact: ""                        # who receives forwarded reports (reference only)
+
+contract:                            # omit for Zenyra projects
+  hours_per_week: 40                 # used by the weekly rollup
+  billing: fixed-tasks               # fixed-tasks | hourly | fixed-scope
+  report_lead: deliverables          # deliverables | time
+
+timezone: America/New_York           # used for reports and date logic
+
+repo:
+  github: org-name/repo-name
+  production_branch: main
+  protected_branches: [main]
+  conventions: CLAUDE.md             # repo file to follow in addition to the kit rules
+
+stack:                               # informs defaults and known-pitfall checks
+  frontend: react-vite-tailwind      # react-vite-tailwind | single-file-html | next | other
+  backend: [supabase, vercel-functions]
+  jobs: none                         # none | inngest | vercel-cron | other
+
+supabase:
+  project_ref: ""                    # production project ref
+  branching: true                    # use preview branches for migrations
+  migrations_dir: supabase/migrations
+
+vercel:
+  team: ""
+  project: ""
+  production_url: ""
+  preview_verification: true
+
+credentials:                         # env var NAMES on the agent host, scoped to this project only
+  github_token: GH_TOKEN_EXAMPLE
+  supabase_token: SUPABASE_TOKEN_EXAMPLE
+  vercel_token: VERCEL_TOKEN_EXAMPLE
+
+discord:
+  log_webhook: DISCORD_LOG_EXAMPLE
+  approvals_channel: DISCORD_APPROVALS_EXAMPLE
+  reports_webhook: DISCORD_REPORTS_EXAMPLE
+
+edit_style: surgical                 # surgical | rewrite-on-request (rewrite always asks first)
+
+reports:
+  audience: non-technical            # non-technical | technical (technical allows file paths)
+  pdf: true
+  weekly_rollup: true
+  weekly_rollup_day: Friday
+
+handoff:
+  eligible: false                    # true if built on Golden's accounts and transferable
+  target_github_org: ""
+  target_vercel_team: ""
+  target_supabase_org: ""
