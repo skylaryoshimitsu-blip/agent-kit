@@ -7,6 +7,10 @@ These rules apply to every project, Zenyra or client. Project-specific settings 
 
 ## 1. Session start
 
+0. Check the kit is active: the session context should contain "agent-kit is active", and
+   `.agent/session-log.jsonl` should exist after your first action. If not, tell Golden
+   immediately (hooks didn't load — usually because the session started with several repos
+   attached; see lesson L-003). Don't wait until `/report`.
 1. Identify the project and load its profile (`agent-profile.yaml` in the repo root,
    or `profiles/<project>.yaml` in the kit). If no profile exists, stop and ask.
 2. Identify the mode: `/new`, `/feature`, `/fix`, `/pair`, `/handoff`, `/report`.

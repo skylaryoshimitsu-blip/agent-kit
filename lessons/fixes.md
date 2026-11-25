@@ -12,5 +12,11 @@ New entries arrive only through a PR that Golden merges.
 ### L-002 · Report archive fails: agent-reports not reachable
 - **Symptom:** `/report` prints `ARCHIVE FAILED: could not clone agent-reports` in a cloud session.
 - **Root cause:** Cloud sessions only reach repos attached to them; agent-reports wasn't attached.
-- **Fix:** Attach `agent-reports` (push access), then run `report.sh archive`. Never rerun `report.sh session` — it would post the report to #reports twice.
+- **Fix:** Attach `agent-reports` (push access) mid-session, then run `report.sh archive`. Never rerun `report.sh session` — it would post the report to #reports twice. Don't start sessions with extra repos attached (see L-003).
+- **Source:** agent-kit /report (2026-11-25)
+
+### L-003 · Hooks didn't run: session started with several repos attached
+- **Symptom:** No automatic "Session started" in #logs, `.agent/` is empty, and `/report` says "No session start in .agent/session-log.jsonl".
+- **Root cause:** A cloud session with two or more repos attached starts in a parent folder, so the project's `.claude/settings.json` hooks never load.
+- **Fix:** Start sessions with only the project repo attached; attach `agent-reports` / `agent-kit` mid-session when needed. If it already happened, tell Golden at once; `/report` still works but shows time as not measured.
 - **Source:** agent-kit /report (2026-11-25)

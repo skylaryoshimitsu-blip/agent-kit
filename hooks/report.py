@@ -14,7 +14,19 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-PROJECT = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
+def _project_dir():
+    if os.environ.get("CLAUDE_PROJECT_DIR"):
+        return Path(os.environ["CLAUDE_PROJECT_DIR"])
+    try:
+        top = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.DEVNULL, text=True).strip()
+        if top:
+            return Path(top)
+    except Exception:
+        pass
+    kit = Path(__file__).resolve().parent.parent
+    return kit.parent if kit.name == ".agent-kit" else kit
+
+PROJECT = _project_dir()
 AGENT = PROJECT / ".agent"
 LOG = AGENT / "session-log.jsonl"
 ARCHIVE = Path(os.environ.get("AGENT_REPORTS_DIR", PROJECT.parent / "agent-reports"))
@@ -54,6 +66,8 @@ def events():
     return out
 
 def fmt_dur(secs):
+    if secs is None:
+        return "not measured this session (hooks didn't run)"
     secs = int(round(secs))
     return f"{secs // 3600}h {secs % 3600 // 60:02d}m"
 
@@ -66,11 +80,22 @@ def session_facts(now=None):
     now = now or datetime.now(timezone.utc)
     ev = events()
     starts = [e for e in ev if e.get("type") == "session_start"]
+    prof = profile()
     if not starts:
-        raise SystemExit("No session start in .agent/session-log.jsonl — hooks may not be installed.")
+        # Hooks didn't run this session (see lesson L-003): report without times.
+        sys.stderr.write("WARNING: no session start in .agent/session-log.jsonl — hooks didn't run "
+                         "(lesson L-003). Times will show as not measured.\n")
+        return {
+            "session": "u-" + now.strftime("%H%M%S"), "measured": False,
+            "project_id": prof["project_id"], "project": prof["display_name"], "owner": prof["owner"],
+            "timezone": prof["timezone"], "audience": prof["audience"], "hours_per_week": prof["hours_per_week"],
+            "start_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "end_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "start_local": local(now, prof["timezone"]), "end_local": local(now, prof["timezone"]),
+            "agent_seconds": None, "hands_on_seconds": None, "messages": None,
+            "commits": [], "pushes": [], "prs": [],
+        }
     sid = starts[-1]["session"]
     mine = sorted((e for e in ev if e.get("session") == sid), key=lambda e: e["at"])
-    prof = profile()
 
     prompts = [parse(e["at"]) for e in mine if e["type"] == "prompt"]
     ends = [parse(e["at"]) for e in mine if e["type"] == "turn_end"]
@@ -94,6 +119,7 @@ def session_facts(now=None):
     start = parse(next(e["at"] for e in mine if e["type"] == "session_start"))
     return {
         "session": sid,
+        "measured": True,
         "project_id": prof["project_id"],
         "project": prof["display_name"],
         "owner": prof["owner"],
@@ -125,8 +151,9 @@ def same_day_end(r):
     return e[-1] if s[0] == e[0] else r['end_local']
 
 def discord_text(r):
-    lines = [f"**Work Report — {r['project']}**",
-             f"{r['start_local']} – {same_day_end(r)} ({r['timezone']})", ""]
+    when = (f"{r['start_local']} – {same_day_end(r)} ({r['timezone']})" if r.get("measured", True)
+            else f"{r['end_local']} ({r['timezone']}) — session times not measured")
+    lines = [f"**Work Report — {r['project']}**", when, ""]
     def section(title, items):
         if items:
             lines.append(f"**{title}**")
@@ -227,14 +254,15 @@ def weekly(date_str=None):
         end = parse(r["end_utc"]).astimezone(tz)
         if monday <= end < sunday_end:
             rows.append(r)
-    hands = sum(r["hands_on_seconds"] for r in rows)
-    agent = sum(r["agent_seconds"] for r in rows)
+    hands = sum(r["hands_on_seconds"] or 0 for r in rows)
+    agent = sum(r["agent_seconds"] or 0 for r in rows)
+    unmeasured = sum(1 for r in rows if not r.get("measured", True))
     done = [c["task"] for r in rows for c in r.get("completed", [])]
     open_items = rows[-1].get("in_progress", []) + rows[-1].get("blocked", []) if rows else []
     week_label = f"Week of {monday.strftime('%b %-d')} – {(sunday_end - timedelta(days=1)).strftime('%b %-d, %Y')}"
     target = prof["hours_per_week"]
     time_lines = [f"Hands-on (Golden): {fmt_dur(hands)}", f"Agent run time: {fmt_dur(agent)}",
-                  f"Sessions: {len(rows)}"]
+                  f"Sessions: {len(rows)}" + (f" ({unmeasured} without measured time)" if unmeasured else "")]
     if target:
         time_lines.insert(1, f"Contract target: {target:g}h per week (hands-on so far: {hands / 3600:.1f}h)")
     AGENT.mkdir(exist_ok=True)

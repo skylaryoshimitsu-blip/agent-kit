@@ -11,7 +11,14 @@ source "$(dirname "$0")/lib.sh"
 set -u
 
 mode="${1:-}"; shift || true
-export AGENT_REPORTS_DIR="${AGENT_REPORTS_DIR:-$(dirname "$PROJECT_DIR")/agent-reports}"
+if [ -z "${AGENT_REPORTS_DIR:-}" ]; then
+  # Use an existing clone if one is attached anywhere obvious; else clone next to the project.
+  for d in "$(dirname "$PROJECT_DIR")/agent-reports" "$PWD/agent-reports" "$HOME/agent-reports"; do
+    [ -d "$d/.git" ] && { AGENT_REPORTS_DIR="$d"; break; }
+  done
+  AGENT_REPORTS_DIR="${AGENT_REPORTS_DIR:-$(dirname "$PROJECT_DIR")/agent-reports}"
+fi
+export AGENT_REPORTS_DIR
 REPORTS_URL="${AGENT_REPORTS_URL:-https://github.com/skylaryoshimitsu-blip/agent-reports}"
 
 ensure_archive() {

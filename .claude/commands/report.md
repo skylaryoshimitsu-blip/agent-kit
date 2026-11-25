@@ -9,7 +9,7 @@ If the argument starts with `weekly`: run `bash <hooks>/report.sh weekly [date]`
 
 Otherwise, write the session report:
 
-1. **Get the facts:** `python3 <hooks>/report.py data`. It prints times (measured, not estimated), commits, pushes, and PRs for this session.
+1. **Get the facts:** `python3 <hooks>/report.py data`. It prints times (measured, not estimated), commits, pushes, and PRs for this session. If the hooks didn't run, it says so and times are marked "not measured" — continue anyway, and list commits/PRs from `git log` and GitHub in the content. Never fill in times yourself.
 2. **Write the content** to `.agent/report-input.json`, following Section 11 of the rules:
    ```json
    {
