@@ -1,26 +1,10 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-start.sh\"", "timeout": 15 }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/post-tool.sh\"", "timeout": 15 }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-end.sh\"", "timeout": 15 }
-        ]
-      }
-    ]
+  "extraKnownMarketplaces": {
+    "agent-kit": {
+      "source": { "source": "github", "repo": "skylaryoshimitsu-blip/agent-kit" }
+    }
+  },
+  "enabledPlugins": {
+    "agent-kit@agent-kit": true
   }
 }
