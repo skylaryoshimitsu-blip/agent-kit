@@ -1,0 +1,4 @@
+# Local session log (feeds reports); never committed
+.agent/
+.env
+.env.*
