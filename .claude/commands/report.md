@@ -26,4 +26,13 @@ Otherwise, write the session report:
 3. **Build, post, archive:** `bash <hooks>/report.sh session .agent/report-input.json`. This posts the message and PDF to #reports and saves both to the agent-reports repo.
 4. If the archive step fails because agent-reports isn't reachable: attach the `skylaryoshimitsu-blip/agent-reports` repo to this session (push access), then run `bash <hooks>/report.sh archive`. Never rerun `report.sh session` — that would post the report to #reports twice. If it still fails, say so plainly; the Discord report still counts as delivered.
 5. Post "Session ended" with the end time to #logs.
-6. Then propose lessons (Section 12), one message each to #lessons.
+6. **Lessons** (Section 12). If this session produced anything worth remembering — a solved bug, a correction from Golden, a rejected plan, a failed verification — write `.agent/lessons-input.json`:
+   ```json
+   [{"type": "fixes", "title": "...", "symptom": "...", "cause": "...", "fix": "...", "source": "<project> /fix (date)"}]
+   ```
+   (`"type": "working-style"` for how Golden wants things done: symptom = when it comes up, cause = why, fix = what to do.)
+   - General enough to help on any project. For client work: no client names, code, data, repos, or URLs.
+   - Check `lessons.sh search` first; don't propose a duplicate of an existing lesson.
+   Then run `bash <hooks>/lessons.sh propose .agent/lessons-input.json`, open a PR on `skylaryoshimitsu-blip/agent-kit` from the branch it prints into `main` (title: "Lessons: <ids>"), and run `bash <hooks>/lessons.sh announce <pr-url>`. Never merge it — Golden approves by merging, edits in the PR, or rejects by deleting entries / closing it.
+   If nothing is worth a lesson, skip this step and say so.
+7. In the report's "next" items, note any lesson that was applied this session (by ID).
