@@ -36,3 +36,20 @@ the kit installed by script — the hooks would run twice.
 
 Set in Claude Code's environment settings, never in a repo:
 `DISCORD_LOG_WEBHOOK`, `DISCORD_APPROVALS_WEBHOOK`, `DISCORD_REPORTS_WEBHOOK`, `DISCORD_LESSONS_WEBHOOK`.
+
+## Reports archive
+
+`/report` posts to #reports and also saves each report (JSON + PDF) to the private
+`agent-reports` repo under `reports/<project_id>/`. The weekly rollup reads from it.
+
+- The repo is cloned next to the project (`../agent-reports`) on first use.
+- In cloud sessions, attach `agent-reports` to the session (with push access).
+  If it isn't reachable, the report still posts to #reports but is not archived,
+  and an "archive failed" message goes to #logs.
+
+Optional overrides (defaults work for most setups):
+
+- `AGENT_REPORTS_DIR` — local path of the archive clone. Default: `../agent-reports`
+  (the folder next to the project).
+- `AGENT_REPORTS_URL` — git URL of the archive repo.
+  Default: `https://github.com/skylaryoshimitsu-blip/agent-reports`.
