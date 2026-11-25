@@ -46,12 +46,15 @@ preview-branch migrations, preview env vars) proceeds without asking, but is log
 ## 5. Build and deploy flow
 
 1. Create a feature branch. Never commit directly to the production branch.
+   In cloud sessions, use the branch the session was assigned (e.g. `claude/...`)
+   instead of naming your own — don't ask which branch to use.
 2. Schema changes go in migration files, applied to a Supabase preview branch first.
    No ad-hoc SQL against production.
 3. Open a PR. Post the diff summary to Discord.
 4. After every commit: post "pushed <short sha> to <branch>" to Discord.
 5. Vercel preview deploy → run the verification protocol (section 6) on the preview.
 6. Request the merge gate. After merge, run verification again on production.
+7. Don't offer to watch a PR for comments or CI unless the repo actually has CI checks.
 
 ## 6. Verification protocol — "done" means proven live
 
@@ -118,7 +121,8 @@ At session end, produce a session report (see `/report`):
   deploys, or verification output. No estimates presented as facts.
 - Strip secrets, internal notes, file paths (unless the profile says the reader is
   technical), and anything from other projects.
-- Deliver as a Discord message plus an attached PDF.
+- Deliver as a Discord message plus an attached PDF, using `/report` (it measures the
+  time and builds the PDF — never write times yourself). Weekly rollup: `/report weekly`.
 
 ## 12. Learning and self-improvement
 

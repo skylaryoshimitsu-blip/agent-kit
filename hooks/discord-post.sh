@@ -15,8 +15,10 @@ set -u
 
 channel="${1:-logs}"
 shift || true
+file=""
+if [ "${1:-}" = "--file" ]; then file="${2:-}"; shift 2 || true; fi
 if [ "$#" -gt 0 ]; then msg="$*"; else msg="$(cat)"; fi
-[ -z "$msg" ] && exit 0
+[ -z "$msg" ] && [ -z "$file" ] && exit 0
 
 case "$channel" in
   logs)      url="${DISCORD_LOG_WEBHOOK:-}" ;;
@@ -48,6 +50,7 @@ payload="$(jq -n --arg c "$redacted" '{content: $c, allowed_mentions: {parse: []
 
 if [ "${DRY_RUN:-0}" = "1" ]; then
   printf '%s\n' "$payload"
+  [ -n "$file" ] && echo "[attachment: $file]"
   exit 0
 fi
 
@@ -56,7 +59,13 @@ if [ -z "$url" ]; then
   exit 0
 fi
 
-curl -sS --max-time 8 -H 'Content-Type: application/json' \
-  -d "$payload" "$url" >/dev/null 2>&1 || \
-  echo "discord-post: send to '$channel' failed" >&2
+if [ -n "$file" ] && [ -f "$file" ]; then
+  curl -sS --max-time 30 --form-string "payload_json=$payload" \
+    -F "files[0]=@$file" "$url" >/dev/null 2>&1 || \
+    echo "discord-post: send with attachment to '$channel' failed" >&2
+else
+  curl -sS --max-time 8 -H 'Content-Type: application/json' \
+    -d "$payload" "$url" >/dev/null 2>&1 || \
+    echo "discord-post: send to '$channel' failed" >&2
+fi
 exit 0
