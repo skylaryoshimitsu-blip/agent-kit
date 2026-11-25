@@ -145,4 +145,6 @@ At session end, produce a session report (see `/report`):
 - **Verify deployed pages** with `hooks/verify.sh <url> [expected text]`. It checks status,
   expected text, and placeholder values, and posts the result to #logs.
 - **Modes:** `/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`
-  (long form `/agent-kit:<mode>` if a name clashes).
+  (long form `/agent-kit:<mode>` when the kit is used as a desktop plugin).
+- **Installing the kit in a project:** `bash install.sh <project path>` from an agent-kit clone
+  (see `docs/INSTALL.md`). In installed projects the kit lives in `.agent-kit/`.

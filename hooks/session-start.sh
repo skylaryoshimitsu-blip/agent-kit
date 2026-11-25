@@ -34,8 +34,14 @@ Commits, pushes, PRs, and session start/end are posted to #logs automatically.
 Plans, gate requests, verification proof, and errors you post yourself with discord-post.sh.
 EOF
 
-# Inject the rules unless this repo already loads the same CLAUDE.md (the kit repo itself).
-if ! cmp -s "$KIT_DIR/CLAUDE.md" "$PROJECT_DIR/CLAUDE.md" 2>/dev/null; then
+# Inject the rules only in plugin mode (kit lives outside the project).
+# In the kit repo itself and in installed projects (.agent-kit/ + CLAUDE.md import),
+# the rules already load through CLAUDE.md.
+case "$KIT_DIR/" in
+  "$PROJECT_DIR"/*) inside=1 ;;
+  *) inside=0 ;;
+esac
+if [ "$inside" = 0 ] && ! cmp -s "$KIT_DIR/CLAUDE.md" "$PROJECT_DIR/CLAUDE.md" 2>/dev/null; then
   printf '\n---\n\n'
   cat "$KIT_DIR/CLAUDE.md"
 fi
