@@ -28,7 +28,7 @@ cat <<EOF
 Tools (use these exact paths):
 - Post to Discord: \`bash "$HOOK_DIR/discord-post.sh" <logs|approvals|reports|lessons> "message"\`
 - Verify a deployed URL: \`bash "$HOOK_DIR/verify.sh" <url> [text that must appear]\`
-- Reports: `/report` (session) and `/report weekly`; scripts in `$HOOK_DIR` (report.py, report.sh)
+- Reports: \`/report\` (session) and \`/report weekly\`; scripts in \`$HOOK_DIR\` (report.py, report.sh)
 - Kit folder (lessons/, profiles/): \`$KIT_DIR\`
 
 Commits, pushes, PRs, and session start/end are posted to #logs automatically.
