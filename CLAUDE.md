@@ -7,7 +7,8 @@ These rules apply to every project, Zenyra or client. Project-specific settings 
 
 ## 1. Session start
 
-1. Identify the project and load its profile. If no profile exists, stop and ask.
+1. Identify the project and load its profile (`agent-profile.yaml` in the repo root,
+   or `profiles/<project>.yaml` in the kit). If no profile exists, stop and ask.
 2. Identify the mode: `/new`, `/feature`, `/fix`, `/pair`, `/handoff`, `/report`.
    If unclear, ask in one line.
 3. Read the repo's own CLAUDE.md, README, and lint/format config if present.
@@ -133,3 +134,15 @@ At session end, produce a session report (see `/report`):
 - Lessons from client work must be generalized: no client code, data, names, or URLs.
   Client-specific knowledge goes in that client's profile only.
 - Monthly: propose consolidating duplicate lessons and retiring outdated ones.
+
+## 13. Tools
+
+- **You can post to Discord.** Use `hooks/discord-post.sh <logs|approvals|reports|lessons> "message"`
+  (the exact path is printed at session start). Never say you have no way to post to Discord.
+- Automatic (hooks): session start/end, commits, pushes, PRs → #logs.
+- You post yourself: plans, gate requests (#approvals), verification proof, raw errors (#logs),
+  reports (#reports), lesson proposals (#lessons).
+- **Verify deployed pages** with `hooks/verify.sh <url> [expected text]`. It checks status,
+  expected text, and placeholder values, and posts the result to #logs.
+- **Modes:** `/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`
+  (long form `/agent-kit:<mode>` if a name clashes).

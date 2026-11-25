@@ -1,0 +1,35 @@
+# Profile for the agent-kit repo itself.
+
+project_id: agent-kit
+display_name: Agent Kit
+
+owner:
+  type: personal
+  name: Agent Kit
+
+timezone: Asia/Manila
+
+repo:
+  github: skylaryoshimitsu-blip/agent-kit
+  production_branch: main
+  protected_branches: [main]
+  conventions: CLAUDE.md
+
+stack:
+  frontend: none
+  backend: [bash-hooks, claude-code-plugin]
+  jobs: none
+
+verification:                 # no deployed site; verify by tests and plugin validation
+  - "claude plugin validate ."
+  - "DRY_RUN=1 run each changed hook with a sample input and show the output"
+
+edit_style: surgical
+
+reports:
+  audience: technical
+  pdf: false
+  weekly_rollup: false
+
+handoff:
+  eligible: false

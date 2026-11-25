@@ -1,0 +1,11 @@
+{
+  "name": "agent-kit",
+  "owner": { "name": "Golden" },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "source": "./",
+      "description": "Golden's build agent: rules, modes, Discord logging, live verification."
+    }
+  ]
+}
