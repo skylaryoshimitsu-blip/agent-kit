@@ -1,42 +1,56 @@
 #!/usr/bin/env bash
-# PostToolUse hook (Bash): post commits, pushes, and opened PRs to #logs.
+# PostToolUse hook (all tools):
+#  - announces the session in #logs on its first tool use
+#  - posts commits (detected by HEAD changing), pushes, and opened PRs
 source "$(dirname "$0")/lib.sh"
 
 input="$(cat)"
 sid="$(printf '%s' "$input" | jq -r '.session_id // "unknown"')"
+tool="$(printf '%s' "$input" | jq -r '.tool_name // ""')"
+
+announce_if_needed "$sid"
+
+[ "$tool" = "Bash" ] || exit 0
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // ""')"
+case "$cmd" in *git*|*gh\ pr*) ;; *) exit 0 ;; esac
 out="$(printf '%s' "$input" | jq -r '[.tool_response.stdout // "", .tool_response.stderr // ""] | join("\n")')"
 
-case "$cmd" in *git*|*gh\ pr*) ;; *) exit 0 ;; esac
-
 repo="$(repo_name)"
+prev_head="$(state_get "$sid" head)"
+cur_head="$(head_sha)"
+br="$(branch_name)"
 
-# Commit: git prints "[branch abc1234] subject" on success.
-if printf '%s' "$cmd" | grep -qE 'git( -C [^ ]+)?( -c [^ ]+)* commit'; then
-  line="$(printf '%s' "$out" | grep -oE '^\[[^]]+ [0-9a-f]{7,}\] .*' | tail -1)"
-  if [ -n "$line" ]; then
-    br="$(printf '%s' "$line" | sed -E 's/^\[([^] ]+).*/\1/')"
-    sha="$(printf '%s' "$line" | sed -E 's/^\[[^ ]+ ([0-9a-f]+)\].*/\1/')"
-    subj="$(printf '%s' "$line" | sed -E 's/^\[[^]]+\] //')"
-    log_event "commit" "$sid" "$(jq -cn --arg sha "$sha" --arg b "$br" --arg s "$subj" '{sha:$sha, branch:$b, subject:$s}')"
-    post logs "📝 Committed \`$sha\` on \`$br\` — $subj"
-  fi
+# Commit: HEAD moved during a command that ran `git commit`.
+# Works regardless of -q, combined commands, or how output is printed.
+if printf '%s' "$cmd" | grep -qE 'git( -C [^ ]+)?( -c [^ ]+)* commit' \
+   && [ -n "$cur_head" ] && [ "$cur_head" != "$prev_head" ]; then
+  subj="$(git -C "$PROJECT_DIR" log -1 --format=%s 2>/dev/null)"
+  log_event "commit" "$sid" "$(jq -cn --arg sha "$cur_head" --arg b "$br" --arg s "$subj" '{sha:$sha, branch:$b, subject:$s}')"
+  post logs "📝 Committed \`$cur_head\` on \`$br\` — $subj"
 fi
+[ -n "$cur_head" ] && state_set "$sid" head "$cur_head"
 
-# Push: git prints "   old..new  local -> remote" or "* [new branch] x -> x".
+# Push: read git's "x -> y" line; if output was suppressed, fall back to
+# checking whether the branch's upstream moved.
 if printf '%s' "$cmd" | grep -qE 'git( -C [^ ]+)?( -c [^ ]+)* push'; then
+  prev_up="$(state_get "$sid" upstream)"
+  cur_up="$(upstream_sha)"
   pline="$(printf '%s' "$out" | grep -E -- '->' | grep -vE 'rejected|error' | tail -1)"
   if [ -n "$pline" ]; then
     rb="$(printf '%s' "$pline" | sed -E 's/.*-> *([^ ]+).*/\1/')"
-    sha="$(git -C "$PROJECT_DIR" rev-parse --short "$rb" 2>/dev/null || git -C "$PROJECT_DIR" rev-parse --short HEAD)"
+    sha="$(git -C "$PROJECT_DIR" rev-parse --short "$rb" 2>/dev/null || echo "$cur_head")"
     log_event "push" "$sid" "$(jq -cn --arg sha "$sha" --arg b "$rb" '{sha:$sha, branch:$b}')"
     post logs "⬆️ Pushed \`$sha\` to \`$rb\` (\`$repo\`)"
+  elif [ -n "$cur_up" ] && [ "$cur_up" != "$prev_up" ]; then
+    log_event "push" "$sid" "$(jq -cn --arg sha "$cur_up" --arg b "$br" '{sha:$sha, branch:$b}')"
+    post logs "⬆️ Pushed \`$cur_up\` to \`$br\` (\`$repo\`)"
   elif printf '%s' "$out" | grep -qE 'rejected|error:|fatal:'; then
     post logs "❌ Push failed (\`$repo\`):
 \`\`\`
 $(printf '%s' "$out" | grep -E 'rejected|error|fatal|hint' | head -8)
 \`\`\`"
   fi
+  [ -n "$cur_up" ] && state_set "$sid" upstream "$cur_up"
 fi
 
 # PR opened: gh prints the PR URL.
