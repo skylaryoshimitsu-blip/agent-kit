@@ -29,8 +29,8 @@ version="$(git -C "$KIT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 # 1. Kit files
 mkdir -p "$PROJ/.agent-kit/hooks" "$PROJ/.agent-kit/profiles"
 cp "$KIT/CLAUDE.md" "$PROJ/.agent-kit/CLAUDE.md"
-for f in "$KIT"/hooks/*.sh; do cp "$f" "$PROJ/.agent-kit/hooks/"; done
-chmod +x "$PROJ"/.agent-kit/hooks/*.sh
+for f in "$KIT"/hooks/*.sh "$KIT"/hooks/*.py; do cp "$f" "$PROJ/.agent-kit/hooks/"; done
+chmod +x "$PROJ"/.agent-kit/hooks/*.sh "$PROJ"/.agent-kit/hooks/*.py
 cp "$KIT/profiles/_template.yaml" "$PROJ/.agent-kit/profiles/_template.yaml"
 if [ -d "$KIT/lessons" ]; then
   mkdir -p "$PROJ/.agent-kit/lessons" && cp -R "$KIT/lessons/." "$PROJ/.agent-kit/lessons/"
@@ -54,7 +54,9 @@ settings="$PROJ/.claude/settings.json"
 kit_hooks='{
   "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/session-start.sh\"", "timeout": 15 }] }],
   "PostToolUse":  [{ "matcher": "*", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/post-tool.sh\"", "timeout": 15 }] }],
-  "SessionEnd":   [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/session-end.sh\"", "timeout": 15 }] }]
+  "SessionEnd":   [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/session-end.sh\"", "timeout": 15 }] }],
+  "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/turn.sh\" prompt", "timeout": 10 }] }],
+  "Stop":         [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.agent-kit/hooks/turn.sh\" turn_end", "timeout": 10 }] }]
 }'
 jq --argjson kit "$kit_hooks" '
   .hooks = (.hooks // {})
