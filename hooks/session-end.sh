@@ -6,6 +6,9 @@ source "$(dirname "$0")/lib.sh"
 input="$(cat)"
 sid="$(printf '%s' "$input" | jq -r '.session_id // "unknown"')"
 
+# Sessions that never used a tool (background helpers) were never announced; stay silent.
+[ -n "$(state_get "$sid" announced)" ] || exit 0
+
 start="$(jq -r --arg s "$sid" 'select(.type=="session_start" and .session==$s) | .at' "$SESSION_LOG" 2>/dev/null | head -1)"
 commits="$(jq -r --arg s "$sid" 'select(.type=="commit" and .session==$s) | .sha' "$SESSION_LOG" 2>/dev/null | wc -l | tr -d ' ')"
 

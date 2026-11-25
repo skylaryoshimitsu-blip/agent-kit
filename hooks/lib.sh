@@ -26,6 +26,25 @@ repo_name() {
 
 branch_name() { git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?"; }
 
+head_sha() { git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null; }
+upstream_sha() { git -C "$PROJECT_DIR" rev-parse --short '@{u}' 2>/dev/null; }
+
+# Per-session state files (kept in .agent/, never committed).
+state_get() { cat "$AGENT_DIR/state-$1-$2" 2>/dev/null; }
+state_set() { printf '%s' "$3" > "$AGENT_DIR/state-$1-$2" 2>/dev/null; }
+
+# Post "Session started" once, at the session's first real action.
+# Background helper sessions never use tools, so they never get announced.
+announce_if_needed() {
+  local sid="$1"
+  [ -n "$(state_get "$sid" announced)" ] && return 0
+  state_set "$sid" announced 1
+  local started="$(state_get "$sid" started_human)"
+  local br="$(state_get "$sid" start_branch)"
+  post logs "🟢 **Session started** — \`$(repo_name)\` on \`${br:-$(branch_name)}\`
+${started:-$(now_human)}"
+}
+
 # Append one event to the local session log (feeds the step 4 reports).
 log_event() {
   # usage: log_event <type> <session_id> [json-extra]

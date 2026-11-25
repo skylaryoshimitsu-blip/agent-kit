@@ -9,7 +9,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "*",
         "hooks": [
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/post-tool.sh\"", "timeout": 15 }
         ]
