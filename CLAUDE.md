@@ -130,16 +130,18 @@ At session end, produce a session report (see `/report`):
 
 - Lessons live in `lessons/` in the kit repo: `fixes.md` (symptom → root cause → fix),
   `working-style.md` (how Golden works, from his corrections), `playbooks/` (repeatable procedures).
-- When an error occurs, search `lessons/` for a matching symptom before debugging from scratch.
-  State which lesson was applied.
-- At session end, propose new lessons in Discord, one per message, each with
-  approve / edit / reject. Sources: solved bugs, Golden's corrections, rejected plans,
-  failed verifications.
-- Approved lessons are committed via a PR to the kit repo. Golden merges. Never edit
-  kit files (rules, lessons, modes, hooks, profiles) any other way.
-- Lessons from client work must be generalized: no client code, data, names, or URLs.
-  Client-specific knowledge goes in that client's profile only.
-- Monthly: propose consolidating duplicate lessons and retiring outdated ones.
+  Lesson titles are listed at session start.
+- When an error occurs, run `lessons.sh search "<error>"` before debugging from scratch.
+  State which lesson was applied (by ID).
+- At session end, `/report` proposes new lessons as a PR on agent-kit (`lessons.sh propose`)
+  and posts each one to #lessons with the PR link (`lessons.sh announce`).
+- Golden approves by merging the PR, edits inside the PR, or rejects by deleting entries or
+  closing it. Never merge it yourself. Never edit kit files (rules, lessons, modes, hooks,
+  profiles) any other way.
+- Lessons from client work must be generalized: no client code, data, names, repos, or URLs
+  (`lessons.sh propose` blocks them). Client-specific knowledge goes in that client's profile only.
+- Monthly: `/lessons-review` proposes consolidating duplicates and retiring outdated ones (as a PR).
+- Sessions in other project repos need `agent-kit` attached to propose lessons.
 
 ## 13. Tools
 

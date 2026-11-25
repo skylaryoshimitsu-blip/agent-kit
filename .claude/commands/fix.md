@@ -7,7 +7,7 @@ Fix: $ARGUMENTS
 
 Follow the agent-kit rules. Steps:
 
-1. **Check lessons first.** Search the kit's `lessons/` folder (and Section 7 of the rules) for a matching symptom. Say which lesson applies, if any.
+1. **Check lessons first.** Run `lessons.sh search "<the error or symptom>"` and check Section 7 of the rules. Say which lesson applies (by ID), if any.
 2. **Reproduce.** Confirm the bug exists (live page, logs, SQL, or failing command). Post the raw error to #logs — don't paraphrase it.
 3. **Plan.** Post root cause + the smallest fix + how it will be verified to #logs and #approvals. Wait for approval in this session.
 4. **Fix** on a branch named `fix/<short-name>`. Surgical change only. Commit and push.

@@ -31,9 +31,18 @@ Tools (use these exact paths):
 - Reports: \`/report\` (session) and \`/report weekly\`; scripts in \`$HOOK_DIR\` (report.py, report.sh)
 - Kit folder (lessons/, profiles/): \`$KIT_DIR\`
 
+- Lessons: \`bash "$HOOK_DIR/lessons.sh" search "<error or topic>"\` before debugging anything
+
 Commits, pushes, PRs, and session start/end are posted to #logs automatically.
 Plans, gate requests, verification proof, and errors you post yourself with discord-post.sh.
 EOF
+
+# Lesson titles, so the agent knows what has been learned (full text via lessons.sh search).
+idx="$(bash "$HOOK_DIR/lessons.sh" index 2>/dev/null)"
+if [ -n "$idx" ]; then
+  printf '\nKnown lessons (search before debugging):\n'
+  printf '%s\n' "$idx" | sed 's/^/- /'
+fi
 
 # Inject the rules only in plugin mode (kit lives outside the project).
 # In the kit repo itself and in installed projects (.agent-kit/ + CLAUDE.md import),
