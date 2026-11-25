@@ -7,6 +7,7 @@ New project: $ARGUMENTS
 
 Follow the agent-kit rules. Steps:
 
+0. **Kit.** If the repo has no `.agent-kit/` folder, install it first: clone agent-kit next to the project and run `bash install.sh <project path>`. Commit that on its own branch.
 1. **Profile.** Look for `agent-profile.yaml` in the repo root. If missing, draft one from the kit's `profiles/_template.yaml`, show it, and ask Golden to confirm owner (Zenyra / client / personal), time zone, and accounts.
 2. **Spec.** Write a short spec: goal, users, features for v1 (and what's deferred), data model (tables and key columns), pages, background jobs, env var NAMES needed, and how each feature will be verified live.
 3. **Gate 1 — spec approval.** Post the spec summary to #approvals with `discord-post.sh approvals`, then stop and wait for Golden's approval in this session.

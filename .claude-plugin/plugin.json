@@ -2,5 +2,8 @@
   "name": "agent-kit",
   "version": "0.3.0",
   "description": "Golden's build agent: working rules, modes (/new /feature /fix /pair /handoff /report), Discord logging, and live verification.",
-  "author": { "name": "Golden" }
+  "author": {
+    "name": "Golden"
+  },
+  "commands": "./.claude/commands/"
 }

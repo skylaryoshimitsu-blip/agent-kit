@@ -1,30 +1,38 @@
 # Using agent-kit in a project
 
-Add this file to the project repo as `.claude/settings.json` (merge with any existing settings):
+## Main way: install script (works in cloud/phone sessions)
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "agent-kit": {
-      "source": { "source": "github", "repo": "skylaryoshimitsu-blip/agent-kit" }
-    }
-  },
-  "enabledPlugins": {
-    "agent-kit@agent-kit": true
-  }
-}
+From a clone of agent-kit, with the project cloned next to it:
+
+```
+bash install.sh /path/to/project
 ```
 
-Or install it by hand inside Claude Code:
+This copies the kit into the project's `.agent-kit/` folder, adds the commands
+(`/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`) to `.claude/commands/`,
+merges the hooks into `.claude/settings.json` (existing settings are kept), adds
+`@.agent-kit/CLAUDE.md` to the project's CLAUDE.md, and creates `agent-profile.yaml`
+from the template if missing.
+
+Commit the result on a branch and open a PR. To update a project to the latest kit,
+rerun the script — it replaces only what it installed — and open a PR again.
+`.agent-kit/VERSION` shows which kit commit a project is on.
+
+If the project already has a command with the same name (e.g. its own `fix.md`),
+the script keeps the project's version and tells you.
+
+## Optional: plugin (desktop/terminal Claude Code only)
+
+Cloud sessions don't load plugins from repo settings, so this is only for local use:
 
 ```
 /plugin install agent-kit --marketplace skylaryoshimitsu-blip/agent-kit
 ```
 
-Then add `agent-profile.yaml` to the repo root (copy `profiles/_template.yaml` from this kit and fill it in).
+Commands are then `/agent-kit:fix` etc. Don't use the plugin in a repo that also has
+the kit installed by script — the hooks would run twice.
 
-New sessions in that repo get: the rules, the modes (`/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`), Discord logging, and `verify.sh`.
-If a command name clashes with another plugin, use the long form, e.g. `/agent-kit:fix`.
+## Environment variables
 
-Required environment variables (set in Claude Code's environment settings, never in a repo):
+Set in Claude Code's environment settings, never in a repo:
 `DISCORD_LOG_WEBHOOK`, `DISCORD_APPROVALS_WEBHOOK`, `DISCORD_REPORTS_WEBHOOK`, `DISCORD_LESSONS_WEBHOOK`.
