@@ -6,7 +6,7 @@
 # What it does — all inside the project, nothing is committed:
 #   .agent-kit/            rules, hooks, profile template, lessons (copied from this kit)
 #   .claude/commands/      /new /feature /fix /pair /report /handoff
-#   .claude/settings.json  hooks merged in (existing settings and hooks are kept)
+#   .claude/settings.json  hooks and permissions merged in (existing settings are kept)
 #   CLAUDE.md              one import line: @.agent-kit/CLAUDE.md
 #   .gitignore             .agent/ (local session log)
 #   agent-profile.yaml     created from the template if missing
@@ -62,6 +62,16 @@ jq --argjson kit "$kit_hooks" '
   .hooks = (.hooks // {})
   | .hooks |= with_entries(.value |= map(select((.hooks // []) | map(.command // "") | any(test("\\.agent-kit/hooks/")) | not)))
   | reduce ($kit | to_entries[]) as $e (.; .hooks[$e.key] = ((.hooks[$e.key] // []) + $e.value))
+' "$settings" > "$settings.tmp" && mv "$settings.tmp" "$settings"
+
+# 3b. Permissions: routine actions (git, builds, tests, Supabase reads) run without prompts;
+#     merges, force pushes, pushes to main, and prod deploys are denied outright.
+#     Existing project permissions are kept; the kit's lists are added.
+jq --argjson k "$(cat "$KIT/kit/permissions.json")" '
+  .permissions = (.permissions // {})
+  | .permissions.allow = (((.permissions.allow // []) + $k.allow) | unique)
+  | .permissions.deny  = (((.permissions.deny  // []) + $k.deny)  | unique)
+  | .permissions.defaultMode = (.permissions.defaultMode // $k.defaultMode)
 ' "$settings" > "$settings.tmp" && mv "$settings.tmp" "$settings"
 
 # 4. CLAUDE.md import line

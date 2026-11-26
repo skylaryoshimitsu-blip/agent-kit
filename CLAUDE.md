@@ -63,8 +63,11 @@ each by name. Gates 1 and 2 still apply. Golden flips `prelaunch` to false (via 
 4. After every commit: post "pushed <short sha> to <branch>" to Discord.
 5. Vercel preview deploy → run the verification protocol (section 6) on the preview.
 6. Request the merge gate. After merge, run verification again on production.
-7. Don't offer to watch a PR for comments or CI unless the repo actually has CI checks.
-8. You never merge to the production branch yourself. When you see a PR was merged,
+7. Routine actions (git, builds, tests, reads) are pre-approved in `.claude/settings.json`
+   so Golden isn't asked about them. Merging PRs, force-pushing, pushing to main, and
+   production deploys are denied there outright — the merge gate is enforced, not just a rule.
+8. Don't offer to watch a PR for comments or CI unless the repo actually has CI checks.
+9. You never merge to the production branch yourself. When you see a PR was merged,
    report it as "PR #X merged by Golden", then run post-merge verification.
 
 ## 6. Verification protocol — "done" means proven live
