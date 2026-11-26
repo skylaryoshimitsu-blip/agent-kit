@@ -47,13 +47,18 @@ These rules apply to every project, Zenyra or client. Project-specific settings 
 Everything else (branches, commits to feature branches, preview deploys, Supabase
 preview-branch migrations, preview env vars) proceeds without asking, but is logged.
 
+**Pre-launch projects** (`prelaunch: true` in the profile): there is no real data or users
+yet, so gates 3 and 4 (production SQL and production env vars) don't apply — do them and log
+each by name. Gates 1 and 2 still apply. Golden flips `prelaunch` to false (via PR) at launch.
+
 ## 5. Build and deploy flow
 
 1. Create a feature branch. Never commit directly to the production branch.
    In cloud sessions, use the branch the session was assigned (e.g. `claude/...`)
    instead of naming your own — don't ask which branch to use.
-2. Schema changes go in migration files, applied to a Supabase preview branch first.
-   No ad-hoc SQL against production.
+2. Schema changes go in migration files. With `branching: true`, apply them to a Supabase
+   preview branch first. With `branching: false`, apply them directly only while
+   `prelaunch: true`; after launch they need gate 3. No ad-hoc SQL outside migrations.
 3. Open a PR. Post the diff summary to Discord.
 4. After every commit: post "pushed <short sha> to <branch>" to Discord.
 5. Vercel preview deploy → run the verification protocol (section 6) on the preview.
@@ -103,9 +108,21 @@ Never report a feature as done based on the code alone.
 
 ## 9. Secrets
 
-- Never post secret values to Discord, PRs, commits, reports, or logs. Names only.
-- Never commit `.env` files or keys. Check the diff for secrets before every commit.
-- If a needed secret is missing, ask for it to be set in Vercel/Supabase directly.
+- Never print, post, log, or commit a secret value (Discord, PRs, commits, reports, logs,
+  chat). Refer to secrets by NAME only. Never commit `.env` files; check the diff for
+  secrets before every commit.
+- You DO handle setup yourself: move secrets between services through their APIs/CLIs
+  (e.g. Supabase service role key → Vercel env var) by piping values directly
+  (stdin, files you delete right after, or `$VAR` expansion inside the command) so they
+  never appear in output. Don't ask Golden to copy keys by hand.
+- Account-level keys live in the Claude Code environment, once, for all projects:
+  `VERCEL_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `CAPTIONS_ANTHROPIC_API_KEY`, `DEEPGRAM_API_KEY`,
+  `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`. `ANTHROPIC_API_KEY` is reserved by Claude Code,
+  so the app's Claude key is stored as `CAPTIONS_ANTHROPIC_API_KEY` and set in the app's
+  hosting as `ANTHROPIC_API_KEY`.
+- Only ask Golden when a needed key is actually missing — say exactly which name, and that
+  it goes in the Claude Code environment settings (then a new session).
+- Client projects: use only the credentials the client's profile names (Section 8).
 
 ## 10. Communication (Discord)
 

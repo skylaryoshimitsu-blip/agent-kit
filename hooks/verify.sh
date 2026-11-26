@@ -17,7 +17,12 @@ expect="${2:-}"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 fails=(); notes=()
 
-meta="$(curl -sSL --max-time 20 -o "$tmp/body" -w '%{http_code} %{size_download} %{time_total}' "$url" 2>"$tmp/err")"
+# Protected Vercel previews: send the automation bypass if it's in the environment.
+bypass=()
+if [ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]; then
+  bypass=(-H "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET" -H "x-vercel-set-bypass-cookie: true")
+fi
+meta="$(curl -sSL --max-time 20 "${bypass[@]}" -o "$tmp/body" -w '%{http_code} %{size_download} %{time_total}' "$url" 2>"$tmp/err")"
 read -r code size secs <<<"$meta"
 code="${code:-000}"
 
@@ -30,7 +35,11 @@ if [ -n "$expect" ]; then
 fi
 
 # Placeholder scan: page plus up to 10 same-site scripts.
-PLACEHOLDERS='YOUR_[A-Z_]+|your-project|<your[-_ ]|REPLACE_ME|CHANGEME|xxxxxxxx|placeholder\.supabase|example\.supabase\.co|localhost:[0-9]+'
+# Placeholders anywhere (page + its scripts). localhost is only checked in the page itself:
+# libraries ship their own localhost defaults (e.g. supabase-js has localhost:9999), which
+# are not our config.
+PLACEHOLDERS='YOUR_[A-Z_]+|your-project|<your[-_ ]|REPLACE_ME|CHANGEME|xxxxxxxx|placeholder\.supabase|example\.supabase\.co'
+page_local="$(grep -oE 'localhost:[0-9]+' "$tmp/body" | sort -u | head -3 | tr '\n' ' ')"
 cp "$tmp/body" "$tmp/scan"
 origin="$(printf '%s' "$url" | grep -oE '^https?://[^/]+')"
 grep -oE '<script[^>]+src="[^"]+"' "$tmp/body" | sed -E 's/.*src="([^"]+)"/\1/' | head -10 | while read -r src; do
@@ -40,9 +49,9 @@ grep -oE '<script[^>]+src="[^"]+"' "$tmp/body" | sed -E 's/.*src="([^"]+)"/\1/' 
     /*) full="$origin$src" ;;
     *) full="${url%/}/$src" ;;
   esac
-  curl -sSL --max-time 15 "$full" >> "$tmp/scan" 2>/dev/null
+  curl -sSL --max-time 15 "${bypass[@]}" "$full" >> "$tmp/scan" 2>/dev/null
 done
-hits="$(grep -oE "$PLACEHOLDERS" "$tmp/scan" | sort -u | head -5 | tr '\n' ' ')"
+hits="$(grep -oE "$PLACEHOLDERS" "$tmp/scan" | sort -u | head -5 | tr '\n' ' ')$page_local"
 if [ -n "$hits" ]; then fails+=("placeholder values shipped: $hits")
 else notes+=("no placeholder values found"); fi
 
