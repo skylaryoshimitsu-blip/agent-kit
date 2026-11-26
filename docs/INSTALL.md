@@ -1,5 +1,35 @@
 # Using agent-kit in a project
 
+## One-time account setup (Claude Code environment variables)
+
+Add these once in claude.ai/code → environment → Edit → Environment variables. Every
+project reuses them; the agent copies what each project needs into its hosting itself.
+
+| Name | Where to get it |
+|---|---|
+| `DISCORD_LOG_WEBHOOK`, `DISCORD_APPROVALS_WEBHOOK`, `DISCORD_REPORTS_WEBHOOK`, `DISCORD_LESSONS_WEBHOOK` | Discord channel → Edit Channel → Integrations → Webhooks |
+| `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens |
+| `SUPABASE_ACCESS_TOKEN` | supabase.com → Account → Access Tokens |
+| `CAPTIONS_ANTHROPIC_API_KEY` | console.anthropic.com → API Keys (`ANTHROPIC_API_KEY` is reserved by Claude Code, so use this name) |
+| `DEEPGRAM_API_KEY` | console.deepgram.com → API Keys |
+| `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` | app.inngest.com → Manage (Production environment) |
+
+New keys only reach sessions started after they're saved, and only in the environment
+that holds them.
+
+## Brand-new repo (first session)
+
+Slash commands only exist after the kit is installed, so the first message must not start
+with `/`. In a new session on the new repo, send:
+
+> Install the agent kit into this repo: attach skylaryoshimitsu-blip/agent-kit to this
+> session, clone it next to this repo, run `bash ../agent-kit/install.sh .`, commit on this
+> session's branch and open a PR into main. Then follow `.claude/commands/new.md` for this
+> request: <describe the project>.
+
+The agent installs the kit, writes the spec, and stops at the spec gate. After that it
+provisions Supabase and Vercel itself.
+
 ## Main way: install script (works in cloud/phone sessions)
 
 From a clone of agent-kit, with the project cloned next to it:

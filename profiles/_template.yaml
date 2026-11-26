@@ -16,6 +16,10 @@ contract:                            # omit for Zenyra projects
   report_lead: deliverables          # deliverables | time
 
 timezone: America/New_York           # used for reports and date logic
+owner_email: ""                      # invited to the app's sign-in during setup
+
+prelaunch: true                      # true until real users/data: production SQL and env vars
+                                     # don't need approval (logged). Set false at launch.
 
 repo:
   github: org-name/repo-name
@@ -30,7 +34,8 @@ stack:                               # informs defaults and known-pitfall checks
 
 supabase:
   project_ref: ""                    # production project ref
-  branching: true                    # use preview branches for migrations
+  region: ap-southeast-1
+  branching: false                   # preview branches need a paid plan; false on free
   migrations_dir: supabase/migrations
 
 vercel:
@@ -39,10 +44,11 @@ vercel:
   production_url: ""
   preview_verification: true
 
-credentials:                         # env var NAMES on the agent host, scoped to this project only
-  github_token: GH_TOKEN_EXAMPLE
-  supabase_token: SUPABASE_TOKEN_EXAMPLE
-  vercel_token: VERCEL_TOKEN_EXAMPLE
+credentials:                         # env var NAMES in the Claude Code environment (never values)
+  vercel_token: VERCEL_TOKEN
+  supabase_token: SUPABASE_ACCESS_TOKEN
+  anthropic_key: CAPTIONS_ANTHROPIC_API_KEY   # set in hosting as ANTHROPIC_API_KEY
+  # client projects: use the client's own token names here
 
 discord:
   log_webhook: DISCORD_LOG_EXAMPLE
