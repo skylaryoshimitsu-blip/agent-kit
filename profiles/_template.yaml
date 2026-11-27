@@ -55,6 +55,14 @@ discord:
   approvals_channel: DISCORD_APPROVALS_EXAMPLE
   reports_webhook: DISCORD_REPORTS_EXAMPLE
 
+team:                                # client projects with a developer who reviews/merges
+  reviewer_github: ""                # their GitHub login: their PR feedback triggers the agent
+  reviewer_discord_id: ""            # their Discord user ID: notes in the shared channel tag them
+  merges: reviewer                   # reviewer | golden — who merges PRs
+
+feedback_autofix: true               # small fixes for reviewer feedback go straight to the PR
+autofix_max_lines: 60                # bigger changes post a plan to #approvals first
+
 edit_style: surgical                 # surgical | rewrite-on-request (rewrite always asks first)
 
 reports:

@@ -106,6 +106,10 @@ Never report a feature as done based on the code alone.
 - Use only the credentials named in the client's profile. Never use Zenyra or other
   clients' tokens, and never reference other clients' code or data.
 - Open PRs for the client's team; never push to their protected branches.
+- When the profile has a `team.reviewer_github`: their PR comments are your task list
+  (`/address-feedback`). Whenever they need to act — review, re-check, approve, merge — post one
+  short line in the shared channel: `discord-post.sh team --mention <reviewer_discord_id> "..."`.
+  Never approve or merge; `team.merges` says who does.
 - `/pair` mode: stay inside the assigned scope, keep PRs small, no surprise refactors,
   and leave review comments rather than rewriting a teammate's code.
 
@@ -176,7 +180,7 @@ At session end, produce a session report (see `/report`):
   reports (#reports), lesson proposals (#lessons).
 - **Verify deployed pages** with `hooks/verify.sh <url> [expected text]`. It checks status,
   expected text, and placeholder values, and posts the result to #logs.
-- **Modes:** `/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`
+- **Modes:** `/new`, `/feature`, `/fix`, `/pair`, `/report`, `/handoff`, `/address-feedback`, `/review`
   (long form `/agent-kit:<mode>` when the kit is used as a desktop plugin).
 - **Installing the kit in a project:** `bash install.sh <project path>` from an agent-kit clone
   (see `docs/INSTALL.md`). In installed projects the kit lives in `.agent-kit/`.
