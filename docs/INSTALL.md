@@ -87,6 +87,34 @@ Optional overrides (defaults work for most setups):
 - `AGENT_REPORTS_URL` — git URL of the archive repo.
   Default: `https://github.com/skylaryoshimitsu-blip/agent-reports`.
 
+## Automatic PR feedback from your Mac (no changes to the client's repo)
+
+The watcher runs on your own computer during your working hours. Every ~2.5 minutes it
+checks the client repo on GitHub and:
+- tags the reviewer in the shared Discord channel when you open a PR ("ready for your review")
+  or approve one ("approved, ready to merge") — no Claude run needed;
+- runs Claude Code when the reviewer leaves feedback on your PRs (no tag needed; "thanks",
+  "LGTM", emoji and approvals are ignored) or when you or they write "@claude".
+Nothing is added to the client's repo. A failed run is retried twice, then you're told in #approvals.
+
+One-time setup on the Mac (Terminal):
+1. Install tools: `brew install gh jq` and `npm install -g @anthropic-ai/claude-code`.
+   Log in: `gh auth login` and `claude` (then exit).
+2. Clone the kit and the client repo: `git clone https://github.com/skylaryoshimitsu-blip/agent-kit ~/agent-kit`
+   and `git clone <client repo> ~/code/<name>`.
+3. Config: `mkdir -p ~/.agent-kit/watch ~/.agent-kit/profiles`, copy `watch/example.conf` to
+   `~/.agent-kit/watch/<name>.conf` and fill it in; copy `profiles/_template.yaml` to
+   `~/.agent-kit/profiles/<name>.yaml` (owner type client, team settings).
+4. Secrets: copy `watch/secrets.env.example` to `~/.agent-kit/secrets.env`, paste the webhooks
+   there (only there), then `chmod 600 ~/.agent-kit/secrets.env`.
+5. Test once: `bash ~/agent-kit/watch/watch.sh <name> --once` — the first run only records
+   what already exists; it doesn't act on old comments.
+6. Start it at login: `bash ~/agent-kit/watch/install-mac.sh <name>`.
+
+Keep the Mac plugged in during your shift (it stays awake by itself during working hours).
+Stop: `launchctl unload ~/Library/LaunchAgents/com.agentkit.watch.<name>.plist`.
+Update the kit: `git -C ~/agent-kit pull`.
+
 ## Automatic PR feedback (GitHub workflow, optional)
 
 For client repos where a developer reviews your PRs: their comments trigger Claude in GitHub

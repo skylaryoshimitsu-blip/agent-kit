@@ -47,7 +47,7 @@ redacted="$(printf '%s' "$msg" | sed -E \
   -e 's/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/[REDACTED_JWT]/g' \
   -e 's/(Bearer|bearer)[[:space:]]+[A-Za-z0-9._~+\/-]{16,}=*/\1 [REDACTED]/g' \
   -e 's/(postgres(ql)?:\/\/[^:[:space:]]+:)[^@[:space:]]+@/\1[REDACTED]@/g' \
-  -e 's/([A-Za-z0-9_]*(KEY|TOKEN|SECRET|PASSWORD|PASS)[A-Za-z0-9_]*[[:space:]]*[=:][[:space:]]*)[^[:space:]"'"'"']+/\1[REDACTED]/gI')"
+  -e 's/([A-Za-z0-9_]*([Kk][Ee][Yy]|[Tt][Oo][Kk][Ee][Nn]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Pp][Aa][Ss][Ss])[A-Za-z0-9_]*[[:space:]]*[=:][[:space:]]*)[^[:space:]"'"'"']+/\1[REDACTED]/g')"
 
 # Discord's limit is 2000 characters; keep a margin.
 if [ "${#redacted}" -gt 1900 ]; then
