@@ -54,8 +54,9 @@ in_hours() {
 }
 
 # --- state ---------------------------------------------------------------
-[ -f "$STATE" ] || echo '{"seen":[],"announced":[],"approved":[],"bootstrapped":false}' > "$STATE"
-st_has() { jq -e --arg k "$1" --arg v "$2" '.[$k] | index($v) != null' "$STATE" >/dev/null; }
+[ -f "$STATE" ] || echo '{"seen":[],"announced":[],"approved":[],"bootstrapped":false,"since":""}' > "$STATE"
+# any(...) behaves the same in every jq version (index() on arrays differs between versions).
+st_has() { jq -e --arg k "$1" --arg v "$2" '(.[$k] // []) | any(.[]; . == $v)' "$STATE" >/dev/null; }
 st_add() { jq --arg k "$1" --arg v "$2" '.[$k] += [$v] | .[$k] |= unique' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"; }
 
 trivial() {
@@ -100,7 +101,7 @@ Never approve or merge a pull request, never call the merge API, never print sec
 }
 
 check() {
-  local bootstrapped; bootstrapped="$(jq -r .bootstrapped "$STATE")"
+  local bootstrapped since; bootstrapped="$(jq -r .bootstrapped "$STATE")"; since="$(jq -r '.since // ""' "$STATE")"
   local prs; prs="$($GH pr list -R "$REPO" --author "$OWNER" --state open --json number,url,isDraft,title 2>>"$LOG")" || { log "gh pr list failed"; return; }
 
   while IFS= read -r p; do
@@ -115,9 +116,9 @@ check() {
 
     # Gather the reviewer's items and your approvals on this PR
     local items
-    items="$( { $GH api "repos/$REPO/issues/$n/comments" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("c" + (.id|tostring)), user: .user.login, body: (.body // ""), state: ""}';
-                $GH api "repos/$REPO/pulls/$n/comments" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("r" + (.id|tostring)), user: .user.login, body: (.body // ""), state: ""}';
-                $GH api "repos/$REPO/pulls/$n/reviews" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("v" + (.id|tostring)), user: .user.login, body: (.body // ""), state: .state}'; } )"
+    items="$( { $GH api "repos/$REPO/issues/$n/comments" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("c" + (.id|tostring)), user: .user.login, body: (.body // ""), state: "", at: (.created_at // "")}';
+                $GH api "repos/$REPO/pulls/$n/comments" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("r" + (.id|tostring)), user: .user.login, body: (.body // ""), state: "", at: (.created_at // "")}';
+                $GH api "repos/$REPO/pulls/$n/reviews" --paginate 2>>"$LOG" | jq -c '.[] | {id: ("v" + (.id|tostring)), user: .user.login, body: (.body // ""), state: .state, at: (.submitted_at // "")}'; } )"
 
     local act=0 mention=0 pending=""
     while IFS= read -r it; do
@@ -125,6 +126,9 @@ check() {
       local id user body state; id="$(jq -r .id <<<"$it")"; user="$(jq -r .user <<<"$it")"; body="$(jq -r .body <<<"$it")"; state="$(jq -r .state <<<"$it")"
       st_has seen "$id" && continue
       [ "$bootstrapped" = true ] || { st_add seen "$id"; continue; }
+      # Second safeguard: never act on anything posted before the watcher's first run.
+      local at; at="$(jq -r '.at // ""' <<<"$it")"
+      if [ -n "$since" ] && [ -n "$at" ] && [[ "$at" < "$since" ]]; then st_add seen "$id"; continue; fi
       if [ "$user" = "$OWNER" ] && [ "$state" = APPROVED ] && ! st_has approved "$n"; then
         st_add approved "$n"; st_add seen "$id"; team "PR #$n approved, ready to merge — $url"; log "approved note PR #$n"
       elif [ "$user" = "$REVIEWER" ] && [ "$state" != APPROVED ] && ! trivial "$body"; then
@@ -156,7 +160,7 @@ check() {
   done <<< "$(printf '%s' "$prs" | jq -c '.[]')"
 
   if [ "$bootstrapped" != true ]; then
-    jq '.bootstrapped = true' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+    jq --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.bootstrapped = true | .since = $t' "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
     log "first run: recorded existing PRs and comments as already handled"
   fi
 }
