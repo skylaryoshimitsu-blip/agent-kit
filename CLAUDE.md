@@ -137,6 +137,8 @@ Never report a feature as done based on the code alone.
 - **Approval channel:** gate requests only, each with a one-line summary and link.
 - Errors: post the raw error output, what was tried, and the next step.
   Don't paraphrase errors.
+- No attribution footers anywhere: no "Generated with Claude Code", no "Co-Authored-By: Claude",
+  no session links — in commits, PR descriptions, PR comments, or Discord posts.
 
 ## 11. Reports
 
