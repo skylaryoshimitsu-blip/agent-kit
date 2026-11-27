@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Send one message to a Discord channel via webhook, with secrets redacted.
 #
-# Usage:  hooks/discord-post.sh <logs|approvals|reports|lessons> "message"
+# Usage:  hooks/discord-post.sh <logs|approvals|reports|lessons|team> [--mention <discord user id>] "message"
 #         echo "message" | hooks/discord-post.sh logs
 #
 # Webhook URLs come from env vars (never from the repo):
 #   DISCORD_LOG_WEBHOOK, DISCORD_APPROVALS_WEBHOOK,
-#   DISCORD_REPORTS_WEBHOOK, DISCORD_LESSONS_WEBHOOK
+#   DISCORD_REPORTS_WEBHOOK, DISCORD_LESSONS_WEBHOOK,
+#   DISCORD_TEAM_WEBHOOK (channel shared with a client's developer; use --mention to ping them)
 #
 # DRY_RUN=1 prints the payload instead of sending it.
 # This script never fails the session: missing config or network errors exit 0.
@@ -15,8 +16,15 @@ set -u
 
 channel="${1:-logs}"
 shift || true
-file=""
-if [ "${1:-}" = "--file" ]; then file="${2:-}"; shift 2 || true; fi
+file=""; mention=""
+while :; do
+  case "${1:-}" in
+    --file) file="${2:-}"; shift 2 || true ;;
+    --mention) mention="${2:-}"; shift 2 || true ;;
+    *) break ;;
+  esac
+done
+[[ "$mention" =~ ^[0-9]{5,25}$ ]] || mention=""
 if [ "$#" -gt 0 ]; then msg="$*"; else msg="$(cat)"; fi
 [ -z "$msg" ] && [ -z "$file" ] && exit 0
 
@@ -25,6 +33,7 @@ case "$channel" in
   approvals) url="${DISCORD_APPROVALS_WEBHOOK:-}" ;;
   reports)   url="${DISCORD_REPORTS_WEBHOOK:-}" ;;
   lessons)   url="${DISCORD_LESSONS_WEBHOOK:-}" ;;
+  team)      url="${DISCORD_TEAM_WEBHOOK:-}" ;;
   *) echo "discord-post: unknown channel '$channel'" >&2; exit 0 ;;
 esac
 
@@ -46,7 +55,12 @@ if [ "${#redacted}" -gt 1900 ]; then
 …(truncated)"
 fi
 
-payload="$(jq -n --arg c "$redacted" '{content: $c, allowed_mentions: {parse: []}}')"
+# Mentions are off by default; --mention pings exactly that one user.
+if [ -n "$mention" ]; then
+  payload="$(jq -n --arg c "<@$mention> $redacted" --arg u "$mention" '{content: $c, allowed_mentions: {parse: [], users: [$u]}}')"
+else
+  payload="$(jq -n --arg c "$redacted" '{content: $c, allowed_mentions: {parse: []}}')"
+fi
 
 if [ "${DRY_RUN:-0}" = "1" ]; then
   printf '%s\n' "$payload"

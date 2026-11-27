@@ -86,3 +86,22 @@ Optional overrides (defaults work for most setups):
   (the folder next to the project).
 - `AGENT_REPORTS_URL` — git URL of the archive repo.
   Default: `https://github.com/skylaryoshimitsu-blip/agent-reports`.
+
+## Automatic PR feedback (GitHub workflow, optional)
+
+For client repos where a developer reviews your PRs: their comments trigger Claude in GitHub
+Actions within about a minute — no server, uses your Claude subscription.
+
+1. Install the kit in the repo (above), then:
+   `bash ../agent-kit/install-workflow.sh . --owner <your login> --reviewer <their login> --reviewer-discord-id <their Discord ID>`
+2. On your own computer: install Claude Code and run `claude setup-token`; copy the token.
+3. Repo → Settings → Secrets and variables → Actions → add `CLAUDE_CODE_OAUTH_TOKEN` (the token),
+   `DISCORD_TEAM_WEBHOOK` (shared channel), `DISCORD_LOG_WEBHOOK`, `DISCORD_APPROVALS_WEBHOOK`.
+4. Commit the workflow on a branch, open a PR, and have it merged.
+
+What triggers it: the reviewer's comments and reviews on your PRs (no tag needed; "thanks" and
+approvals are ignored), and `@claude` from you or the reviewer in any PR comment or new issue.
+Your PR opening and your approvals send the reviewer a Discord note without running Claude.
+
+Remove it anytime: delete `.github/workflows/agent-kit-pr-feedback.yml` and the four secrets,
+and revoke the token in your Claude settings.
