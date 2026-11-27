@@ -72,6 +72,7 @@ jq --argjson k "$(cat "$KIT/kit/permissions.json")" '
   | .permissions.allow = (((.permissions.allow // []) + $k.allow) | unique)
   | .permissions.deny  = (((.permissions.deny  // []) + $k.deny)  | unique)
   | .permissions.defaultMode = (.permissions.defaultMode // $k.defaultMode)
+  | .attribution = (.attribution // {commit: "", pr: ""})
 ' "$settings" > "$settings.tmp" && mv "$settings.tmp" "$settings"
 
 # 4. CLAUDE.md import line

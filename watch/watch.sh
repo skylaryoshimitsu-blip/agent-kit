@@ -78,7 +78,7 @@ run_claude() {
   if [ "$kind" = feedback ]; then
     task="Address @$REVIEWER's new feedback on PR #$pr in $REPO by following $KIT/.claude/commands/address-feedback.md. Check out the PR branch first with \`gh pr checkout $pr\`."
   else
-    task="Handle the new @claude request on #$pr in $REPO (read it with gh). Follow $KIT/.claude/commands/fix.md or feature.md as fits; any code change goes on a branch with a PR."
+    task="Handle the new @claude request on #$pr in $REPO (read the PR conversation with gh). If it approves a plan you posted earlier on this PR (a comment starting 'Plan (waiting for Golden's approval)'), implement that plan with any changes Golden asked for, on the PR's branch (\`gh pr checkout $pr\`). Otherwise follow $KIT/.claude/commands/fix.md or feature.md as fits; any code change goes on a branch with a PR."
   fi
   log "running claude for #$pr ($kind)"
   ( cd "$LOCAL_PATH" || exit 90
@@ -88,8 +88,10 @@ Project profile: $PROFILE (owner type client; reviewer $REVIEWER, Discord ID $RE
 Discord: bash $KIT/hooks/discord-post.sh <team|logs|approvals> [--mention $REVIEWER_DISCORD_ID] \"message\".
 Lessons: bash $KIT/hooks/lessons.sh search \"<error>\".
 You are running headless from Golden's watcher: skip Section 1 step 0 (hooks check). No one can answer questions mid-run — if you are blocked or the change is too big for feedback_autofix, post a short plan or question to #approvals and stop.
+No attribution footers: never add "Generated with Claude Code", "Co-Authored-By: Claude", or session links to commits, PRs, or comments.
 Never approve or merge a pull request, never call the merge API, never print secret values." \
       --append-system-prompt "$(cat "$KIT/CLAUDE.md")" \
+      --settings '{"attribution":{"commit":"","pr":""}}' \
       --permission-mode acceptEdits \
       --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checkout:*),Bash(gh pr comment:*),Bash(gh pr create:*),Bash(gh api:*),Bash(gh issue view:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(node:*),Bash(python3:*),Bash(bash $KIT/hooks/:*),Bash(jq:*),Bash(ls:*),Bash(cat:*)" \
       --disallowedTools "Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh api -X PUT:*),Bash(gh api --method PUT:*),Bash(git push --force:*),Bash(git push -f:*),Bash(git push origin main:*)" \

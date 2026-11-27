@@ -155,5 +155,9 @@
       "mcp__github__merge_pull_request"
     ],
     "defaultMode": "acceptEdits"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }

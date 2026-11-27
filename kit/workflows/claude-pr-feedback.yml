@@ -86,8 +86,10 @@ jobs:
             - If this is feedback from @__REVIEWER__ on a pull request: follow .claude/commands/address-feedback.md for that PR.
             - If this is an "@claude" request: read the comment or issue with `gh`, then follow .claude/commands/fix.md or feature.md as fits; open a PR for any code change.
             Discord: `bash .agent-kit/hooks/discord-post.sh <team|logs|approvals> [--mention __REVIEWER_DISCORD_ID__] "message"`.
+            No attribution footers ("Generated with Claude Code", "Co-Authored-By: Claude") in commits, PRs, or comments.
             Never approve or merge a pull request. Never print secret values.
           claude_args: >-
             --max-turns 40
+            --settings '{"attribution":{"commit":"","pr":""}}'
             --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh issue:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(node:*),Bash(python3:*),Bash(bash .agent-kit/hooks/:*),Bash(jq:*),Bash(ls:*),Bash(cat:*)"
             --disallowedTools "Bash(gh pr merge:*),Bash(gh pr review --approve:*),Bash(git push --force:*),Bash(git push -f:*)"
