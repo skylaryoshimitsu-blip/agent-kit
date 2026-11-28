@@ -13,11 +13,16 @@
 #
 # Usage:  bash watch.sh <name>          (reads ~/.agent-kit/watch/<name>.conf)
 #         bash watch.sh <name> --once   (one check, then exit — for testing)
+#         bash watch.sh <name> --sync-now  (one check now, even outside working hours — use it
+#                                          after you finish manual work, so the watcher takes over
+#                                          from exactly that point)
 set -uo pipefail
 
 KIT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${1:-}"; [ -z "$NAME" ] && { echo "usage: watch.sh <name> [--once]" >&2; exit 2; }
-ONCE=0; [ "${2:-}" = "--once" ] && ONCE=1
+ONCE=0; FORCE=0
+[ "${2:-}" = "--once" ] && ONCE=1
+[ "${2:-}" = "--sync-now" ] && { ONCE=1; FORCE=1; }
 HOME_DIR="${AGENT_KIT_HOME:-$HOME/.agent-kit}"
 CONF="$HOME_DIR/watch/$NAME.conf"
 [ -f "$CONF" ] || { echo "missing config: $CONF (copy watch/example.conf)" >&2; exit 2; }
@@ -45,6 +50,7 @@ hm() { date -r "$1" '+%-I:%M %p' 2>/dev/null || date -d "@$1" '+%-I:%M %p'; }
 
 # --- working hours -------------------------------------------------------
 in_hours() {
+  [ "$FORCE" = 1 ] && return 0
   local h d start end prev
   h=$((10#$(date +%H))); d=$(date +%u)
   start=$((10#${HOURS%-*})); end=$((10#${HOURS#*-}))
