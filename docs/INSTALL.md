@@ -103,6 +103,20 @@ If Claude hits your usage limit, the watcher pauses (⏸ in #logs) and retries w
 Nothing is added to the client's repo. A failed run is retried twice, then you're told in #approvals.
 Set `autofix_max_lines: 0` in the profile for no size limit on feedback fixes.
 
+### Reply from Discord, and progress reports (optional, free)
+1. discord.com/developers/applications → New Application → **Bot**: Reset Token (put it in
+   `~/.agent-kit/secrets.env` as `DISCORD_BOT_TOKEN=`), turn on **Message Content Intent**.
+2. **OAuth2 → URL Generator**: scope `bot`; permissions View Channels, Read Message History,
+   Send Messages, Add Reactions. Open the URL and add the bot to the server with your #approvals.
+3. In the watcher config: `DISCORD_APPROVALS_CHANNEL_ID`, `OWNER_DISCORD_ID`, `REPORT_EVERY_SHIFTS=2`.
+   In secrets: `DISCORD_EOD_WEBHOOK=` (the channel reports are posted to).
+4. Save the last report you posted as `~/.agent-kit/reports/<name>/last.md` — new reports copy
+   its format and continue its numbering.
+
+In #approvals you can then write: `#17 approved`, `#17 <instructions>` (or reply to a watcher
+message about #17), `send` / `edit: <changes>` / `skip` for a report draft, or `report now`.
+The watcher reacts ✅ when it has picked up your message. Only your messages are read.
+
 One-time setup on the Mac (Terminal):
 1. Install tools: `brew install gh jq` and `npm install -g @anthropic-ai/claude-code`.
    Log in: `gh auth login` and `claude` (then exit).
