@@ -41,6 +41,8 @@ fi
 PLACEHOLDERS='YOUR_[A-Z_]+|your-project|<your[-_ ]|REPLACE_ME|CHANGEME|xxxxxxxx|placeholder\.supabase|example\.supabase\.co'
 page_local="$(grep -oE 'localhost:[0-9]+' "$tmp/body" | sort -u | head -3 | tr '\n' ' ')"
 cp "$tmp/body" "$tmp/scan"
+# ID templates inside libraries (e.g. 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx' for UUIDs) are not
+# placeholders; remove them before scanning (lesson L-006).
 origin="$(printf '%s' "$url" | grep -oE '^https?://[^/]+')"
 grep -oE '<script[^>]+src="[^"]+"' "$tmp/body" | sed -E 's/.*src="([^"]+)"/\1/' | head -10 | while read -r src; do
   case "$src" in
@@ -51,6 +53,7 @@ grep -oE '<script[^>]+src="[^"]+"' "$tmp/body" | sed -E 's/.*src="([^"]+)"/\1/' 
   esac
   curl -sSL --max-time 15 "${bypass[@]}" "$full" >> "$tmp/scan" 2>/dev/null
 done
+sed -E 's/[xX]{8}-[xX]{4}-[0-9xX]{4}-[0-9xXyY]{4}-[xX]{12}//g' "$tmp/scan" > "$tmp/scan2" && mv "$tmp/scan2" "$tmp/scan"
 hits="$(grep -oE "$PLACEHOLDERS" "$tmp/scan" | sort -u | head -5 | tr '\n' ' ')$page_local"
 if [ -n "$hits" ]; then fails+=("placeholder values shipped: $hits")
 else notes+=("no placeholder values found"); fi

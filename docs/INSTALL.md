@@ -94,8 +94,14 @@ checks the client repo on GitHub and:
 - tags the reviewer in the shared Discord channel when you open a PR ("ready for your review")
   or approve one ("approved, ready to merge") — no Claude run needed;
 - runs Claude Code when the reviewer leaves feedback on your PRs (no tag needed; "thanks",
-  "LGTM", emoji and approvals are ignored) or when you or they write "@claude".
+  "LGTM", emoji and approvals are ignored) or when you or they write "@claude";
+- runs Claude Code on the reviewer's comments on issues you're involved in (plus `ISSUES` in the
+  config): answers questions, revises documents, and starts work they authorize.
+Visibility in your #logs: a live status line edited every check, shift start/end lines, a 🔎
+decision line for every comment, and ▶️/✅ lines for every Claude run.
+If Claude hits your usage limit, the watcher pauses (⏸ in #logs) and retries when it resets.
 Nothing is added to the client's repo. A failed run is retried twice, then you're told in #approvals.
+Set `autofix_max_lines: 0` in the profile for no size limit on feedback fixes.
 
 One-time setup on the Mac (Terminal):
 1. Install tools: `brew install gh jq` and `npm install -g @anthropic-ai/claude-code`.
